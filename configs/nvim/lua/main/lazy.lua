@@ -40,16 +40,59 @@ local specs = require("main.plugins")
 
 local pack_plugins = {}
 local pack_opt_names = {}
+local seen = {}
+
+local function add_pack_repo(repo)
+    local src = repo_to_src(repo)
+    if seen[src] then
+        return
+    end
+    seen[src] = true
+
+    table.insert(pack_plugins, { src = src })
+
+    -- Directory name under `pack/*/opt/` is the repo name suffix.
+    local name = repo:match("[^/]+$")
+    if name then
+        table.insert(pack_opt_names, name)
+    end
+end
+
+local function dep_repo(dep)
+    if type(dep) == "string" then
+        return dep
+    end
+    if type(dep) ~= "table" then
+        return nil
+    end
+
+    -- Lazy.nvim-style: { "owner/name", ... }
+    if type(dep[1]) == "string" then
+        return dep[1]
+    end
+
+    if type(dep.repo) == "string" then
+        return dep.repo
+    end
+    if type(dep.src) == "string" then
+        return dep.src
+    end
+
+    return nil
+end
 
 for _, spec in ipairs(specs) do
     local repo = spec_repo(spec)
     if repo then
-        table.insert(pack_plugins, { src = repo_to_src(repo) })
+        add_pack_repo(repo)
+    end
 
-        -- Directory name under `pack/*/opt/` is the repo name suffix.
-        local name = repo:match("[^/]+$")
-        if name then
-            table.insert(pack_opt_names, name)
+    if type(spec) == "table" and type(spec.dependencies) == "table" then
+        for _, dep in ipairs(spec.dependencies) do
+            local depRef = dep_repo(dep)
+            if depRef then
+                add_pack_repo(depRef)
+            end
         end
     end
 end

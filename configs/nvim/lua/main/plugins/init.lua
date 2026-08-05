@@ -5,4 +5,5 @@ return {
     require("main.plugins.harpoon"),
     require("main.plugins.fzf"),
     require("main.plugins.web-devicons"),
+    require("main.plugins.neo-tree"),
 }

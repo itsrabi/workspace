@@ -16,28 +16,59 @@ end, { desc = "Harpoon: add file" })
 
 -- FZF --------------------------------------------------------------
 
+local function fzf_available()
+    return vim.fn.executable("fzf") == 1
+        and vim.fn.executable("rg") == 1
+        and vim.fn.executable("fd") == 1
+end
+
+local function in_interactive_term()
+    local term = vim.fn.getenv("TERM")
+    return term ~= nil and term ~= ""
+end
+
+local function run_fzf(fn, desc)
+    if not fzf_available() then
+        vim.notify((desc or "FZF") .. ": fzf/rg/fd not available", vim.log.levels.ERROR)
+        return
+    end
+
+    -- Avoid hanging/headless errors in CI smoke; on a real TTY TERM is set.
+    if not in_interactive_term() then
+        vim.notify((desc or "FZF") .. ": requires an interactive terminal", vim.log.levels.WARN)
+        return
+    end
+
+    local ok, err = pcall(fn)
+    if not ok then
+        vim.notify((desc or "FZF") .. ": " .. tostring(err), vim.log.levels.ERROR)
+    end
+end
+
 vim.keymap.set("n", "<leader><space>", function()
-    require("fzf-lua").files()
+    run_fzf(function() require("fzf-lua").files() end, "FZF: find files")
 end, { desc = "FZF: find files" })
 
 vim.keymap.set("n", "<leader>/", function()
-    require("fzf-lua").live_grep()
+    run_fzf(function() require("fzf-lua").live_grep() end, "FZF: search text")
 end, { desc = "FZF: search text" })
 
 vim.keymap.set("n", "<leader>fb", function()
-    require("fzf-lua").buffers()
+    run_fzf(function() require("fzf-lua").buffers() end, "FZF: buffers")
 end, { desc = "FZF: buffers" })
 
 vim.keymap.set("n", "<leader>fg", function()
-    require("fzf-lua").git_files()
+    run_fzf(function() require("fzf-lua").git_files() end, "FZF: git files")
 end, { desc = "FZF: git files" })
 
 vim.keymap.set("n", "<leader>fr", function()
-    require("fzf-lua").oldfiles()
+    run_fzf(function() require("fzf-lua").oldfiles() end, "FZF: recent files")
 end, { desc = "FZF: recent files" })
 
 -- Explorer ---------------------------------------------------------
 
-vim.keymap.set("n", "<leader>e", "<cmd>Explore<cr>", {
-    desc = "Open file explorer",
+vim.keymap.set("n", "<leader>e", function()
+    vim.cmd("Neotree toggle")
+end, {
+    desc = "Neo-tree: toggle file tree",
 })
