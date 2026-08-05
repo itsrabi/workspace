@@ -1,0 +1,30 @@
+{
+  "name": "Fedora Dev Container Base (Neovim + rg + fd)",
+
+  // Prefer the prebuilt image from your ACR. Placeholder values only.
+  // Uncomment and update when you publish the image.
+  // "image": "<ACR_LOGIN_SERVER>/<IMAGE_NAME>:latest",
+
+  // Or build locally from this repo.
+  "build": {
+    "dockerfile": "../Dockerfile",
+    "context": "..",
+    "args": {
+      "USERNAME": "developer",
+      "USER_UID": "1000",
+      "USER_GID": "1000",
+
+      // Placeholder: set to your personal dotfiles repo when you are ready.
+      "DOTFILES_REPO": "",
+      "DOTFILES_REV": "master",
+      "DOTFILES_NVIM_PATH": "",
+      "REQUIRE_DOTFILES_CONFIG": "false"
+    }
+  },
+
+  "remoteUser": "developer",
+  "settings": {
+    "terminal.integrated.defaultProfile.linux": "bash",
+    "terminal.integrated.fontFamily": "Cascadia Code NF"
+  }
+}
