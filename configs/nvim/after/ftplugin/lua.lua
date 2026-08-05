@@ -1,0 +1,2 @@
+-- Filetype plugin for Lua.
+-- Intentionally empty in this cleanup.

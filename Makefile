@@ -1,4 +1,5 @@
-.PHONY: build install run smoke clean deps push
+.PHONY: build install run smoke workspace-image workspace sandbox clean deps push
+SHELL := /bin/bash
 
 # Azure Container Registry (ACR) configuration.
 # Required env vars for `make push`:
@@ -37,14 +38,15 @@ push:
 # Image name/tag used for local development.
 IMAGE ?= devcontainer-base-fedora:local
 
+# Workspace image/container naming.
+WORKSPACE_IMAGE ?= fedora-workspace:latest
+WORKSPACE_CONTAINER ?= fedora-workspace
+
 # Optional build args for dotfiles import.
 # Example:
-#   make build DOTFILES_REPO=https://github.com/you/dotfiles.git DOTFILES_NVIM_PATH=.config/nvim REQUIRE_DOTFILES_CONFIG=true
+#   make build DOTFILES_REPO=https://github.com/you/dotfiles.git DOTFILES_REV=master
 DOTFILES_REPO ?=
 DOTFILES_REV ?= master
-DOTFILES_NVIM_PATH ?=
-REQUIRE_DOTFILES_CONFIG ?= false
-
 # Use podman by default.
 PODMAN ?= podman
 
@@ -68,8 +70,6 @@ build:
 	  --build-arg USER_GID=1000 \
 	  --build-arg DOTFILES_REPO="$(DOTFILES_REPO)" \
 	  --build-arg DOTFILES_REV="$(DOTFILES_REV)" \
-	  --build-arg DOTFILES_NVIM_PATH="$(DOTFILES_NVIM_PATH)" \
-	  --build-arg REQUIRE_DOTFILES_CONFIG="$(REQUIRE_DOTFILES_CONFIG)" \
 	  .
 
 # Alias requested by you: "make install" creates the image.
@@ -78,9 +78,23 @@ install: deps build
 run:
 	$(PODMAN) run --rm -it $(IMAGE) bash
 
-# Runs the in-image smoke-check script.
+# Runs the in-repo smoke-check script via a bind-mount (so the image filesystem stays smoke-free).
 smoke:
-	$(PODMAN) run --rm -it $(IMAGE) bash -lc "bash /workspaces/smoke-check.sh"
+	$(PODMAN) run --rm -v "$(CURDIR):/workspaces" $(IMAGE) bash -lc "bash scripts/smoke-check.sh"
+
+# Retag the base image as a stable, long-lived workspace image.
+workspace-image: install
+	@echo "Tagging local image '$(IMAGE)' as '$(WORKSPACE_IMAGE)'"
+	@$(PODMAN) tag "$(IMAGE)" "$(WORKSPACE_IMAGE)"
+
+# Create/recreate the long-lived workspace container and run the repo-owned smoke script inside it.
+workspace: workspace-image
+	powershell -NoProfile -ExecutionPolicy Bypass -File scripts/workspace.ps1 -Action Workspace -WorkspaceImage "$(WORKSPACE_IMAGE)" -WorkspaceContainer "$(WORKSPACE_CONTAINER)"
+
+# Convenience: create/enter a sandbox for the current directory.
+# Note: this is not the general anywhere workflow; inside the workspace, the in-container `sandbox` command is the general workflow.
+sandbox:
+	powershell -NoProfile -ExecutionPolicy Bypass -File scripts/workspace.ps1 -Action Sandbox -WorkspaceContainer "$(WORKSPACE_CONTAINER)" -SourceDir "$(CURDIR)"
 
 clean:
 	-$(PODMAN) rmi $(IMAGE) || true

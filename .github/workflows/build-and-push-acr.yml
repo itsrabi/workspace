@@ -53,9 +53,6 @@ jobs:
             # Placeholder: set these secrets to your dotfiles repo when ready.
             DOTFILES_REPO=${{ secrets.DOTFILES_REPO }}
             DOTFILES_REV=${{ secrets.DOTFILES_REV || 'master' }}
-            DOTFILES_NVIM_PATH=${{ secrets.DOTFILES_NVIM_PATH || '' }}
-            REQUIRE_DOTFILES_CONFIG=${{ secrets.REQUIRE_DOTFILES_CONFIG || 'false' }}
-
       - name: Smoke test pulled image
         run: |
           set -euo pipefail

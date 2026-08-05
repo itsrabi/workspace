@@ -1,0 +1,5 @@
+-- main/core/options.lua
+--
+-- Repo-owned placeholder for core Neovim option defaults.
+--
+-- Keep this intentionally minimal to avoid behavior-changing defaults.

@@ -14,11 +14,9 @@
       "USER_UID": "1000",
       "USER_GID": "1000",
 
-      // Placeholder: set to your personal dotfiles repo when you are ready.
+      // Placeholder: set to your personal dotfiles repo
       "DOTFILES_REPO": "",
-      "DOTFILES_REV": "master",
-      "DOTFILES_NVIM_PATH": "",
-      "REQUIRE_DOTFILES_CONFIG": "false"
+      "DOTFILES_REV": "master"
     }
   },
 

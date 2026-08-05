@@ -9,16 +9,12 @@ ARG USER_GID=1000
 
 # Placeholder for your personal dotfiles repo that contains Neovim config.
 #
-# Expected layout options (choose what matches your repo):
-#   - <repo>/.config/nvim
-#   - <repo>/nvim
-#   - <repo>/<DOTFILES_NVIM_PATH>  (custom)
-#
-# IMPORTANT: leave DOTFILES_REPO empty to build without importing your config yet.
+# IMPORTANT: leave DOTFILES_REPO empty to build with the repo-owned Neovim config.
+# External override lookup order inside the cloned repo:
+#   1) .config/nvim
+#   2) nvim
 ARG DOTFILES_REPO=""                # e.g. https://github.com/<you>/dotfiles.git
 ARG DOTFILES_REV="master"          # e.g. master/main
-ARG DOTFILES_NVIM_PATH=""         # e.g. .config/nvim (optional override)
-ARG REQUIRE_DOTFILES_CONFIG="false"
 
 ENV LANG=en_US.UTF-8 \
     LC_ALL=en_US.UTF-8 \
@@ -27,7 +23,7 @@ ENV LANG=en_US.UTF-8 \
 # Base packages.
 # Notes:
 # - fd-find package provides the `fd` binary.
-# - neovim provides `nvim`.
+# - Neovim is installed from a pinned upstream release tarball below.
 RUN set -euxo pipefail; \
     dnf -y update; \
     dnf -y install --setopt=install_weak_deps=false \
@@ -45,9 +41,10 @@ RUN set -euxo pipefail; \
       util-linux \
       sudo \
       shadow-utils \
+      podman \
       # Editors / CLI tools \
-      neovim \
       ripgrep \
+      fzf \
       fd-find \
       # Common dev toolchains \
       gcc \
@@ -60,6 +57,13 @@ RUN set -euxo pipefail; \
     dnf clean all; \
     rm -rf /var/cache/dnf
 
+# Install pinned Neovim so vim.pack is available.
+RUN set -euxo pipefail; \
+    curl -fsSL "https://github.com/neovim/neovim/releases/download/v0.12.4/nvim-linux-x86_64.tar.gz" -o /tmp/nvim-linux-x86_64.tar.gz; \
+    tar -C /opt -xzf /tmp/nvim-linux-x86_64.tar.gz; \
+    ln -sf /opt/nvim-linux-x86_64/bin/nvim /usr/local/bin/nvim; \
+    rm -f /tmp/nvim-linux-x86_64.tar.gz; \
+    nvim --version | grep '^NVIM v0.12.4$'
 # Locale setup (Fedora base images don't always include it).
 # We keep it robust with a best-effort approach.
 RUN set -euxo pipefail; \
@@ -86,57 +90,53 @@ RUN set -euxo pipefail; \
       echo '[ -f /etc/dev-image-statusline-bash-prompt-block ] && . /etc/dev-image-statusline-bash-prompt-block' >> /etc/bashrc; \
     fi
  
- # Default Neovim config (so `nvim --headless` works even before dotfiles are wired).
- # This will be overwritten if DOTFILES_REPO is provided.
-RUN set -euxo pipefail; \
-    mkdir -p /home/${USERNAME}/.config/nvim; \
-    cat > /home/${USERNAME}/.config/nvim/init.vim <<'EOF'
-" Minimal safe default. Replace/import via DOTFILES_REPO build args.
-set nocompatible
-syntax on
-filetype plugin indent on
-EOF
+# Repo-owned Neovim configuration (default).
+# Stored once under /etc/xdg so both root and the non-root user share it.
+COPY configs/nvim/ /etc/xdg/nvim/
 
-# Import Neovim config from your dotfiles repo.
-# This is designed to be easy to fill in later (no hard dependency during build).
-RUN --mount=type=cache,target=/var/cache/dnf \
-    set -euxo pipefail; \
-    if [ -n "${DOTFILES_REPO}" ]; then \
-      echo "Importing Neovim config from ${DOTFILES_REPO}@${DOTFILES_REV}"; \
-      dnf -y install --setopt=install_weak_deps=false git; \
-      rm -rf /tmp/dotfiles; \
-      git clone --depth 1 --branch "${DOTFILES_REV}" "${DOTFILES_REPO}" /tmp/dotfiles; \
-      mkdir -p "/home/${USERNAME}/.config/nvim"; \
-      NVIM_SRC=""; \
-      if [ -n "${DOTFILES_NVIM_PATH}" ] && [ -d "/tmp/dotfiles/${DOTFILES_NVIM_PATH}" ]; then \
-        NVIM_SRC="/tmp/dotfiles/${DOTFILES_NVIM_PATH}"; \
-      elif [ -d "/tmp/dotfiles/.config/nvim" ]; then \
-        NVIM_SRC="/tmp/dotfiles/.config/nvim"; \
-      elif [ -d "/tmp/dotfiles/nvim" ]; then \
-        NVIM_SRC="/tmp/dotfiles/nvim"; \
-      fi; \
-      if [ -z "$NVIM_SRC" ]; then \
-        echo "[warn] Could not find Neovim config in dotfiles."; \
-        echo "[warn] Tried DOTFILES_NVIM_PATH='${DOTFILES_NVIM_PATH}', .config/nvim, and nvim/."; \
-        if [ "${REQUIRE_DOTFILES_CONFIG}" = "true" ]; then exit 1; else true; fi; \
-      else \
-        rm -rf "/home/${USERNAME}/.config/nvim"/*; \
-        cp -a "$NVIM_SRC"/* "/home/${USERNAME}/.config/nvim/"; \
-      fi; \
-      rm -rf /tmp/dotfiles; \
-    else \
-      echo "DOTFILES_REPO is empty; skipping Neovim dotfiles import"; \
-    fi
+RUN set -euxo pipefail; \
+  mkdir -p "/home/${USERNAME}/.config" /root/.config; \
+  ln -sfn "/etc/xdg/nvim" "/home/${USERNAME}/.config/nvim"; \
+  ln -sfn "/etc/xdg/nvim" "/root/.config/nvim"; \
+  chown -R "${USERNAME}:${USER_GID}" /etc/xdg/nvim; \
+  if [ ! -f "/etc/xdg/nvim/init.lua" ]; then \
+    echo "[error] Repo-owned Neovim config missing: /etc/xdg/nvim/init.lua"; \
+    exit 1; \
+  fi
+
+# Optional override Neovim config from an external dotfiles repo.
+RUN set -euxo pipefail; \
+  if [ -n "${DOTFILES_REPO}" ]; then \
+    echo "Importing Neovim config from ${DOTFILES_REPO}@${DOTFILES_REV}"; \
+    rm -rf /tmp/dotfiles; \
+    git clone --depth 1 --branch "${DOTFILES_REV}" "${DOTFILES_REPO}" /tmp/dotfiles; \
+    NVIM_SRC=""; \
+    if [ -d "/tmp/dotfiles/.config/nvim" ]; then \
+      NVIM_SRC="/tmp/dotfiles/.config/nvim"; \
+    elif [ -d "/tmp/dotfiles/nvim" ]; then \
+      NVIM_SRC="/tmp/dotfiles/nvim"; \
+    fi; \
+    if [ -z "$NVIM_SRC" ]; then \
+      echo "[error] DOTFILES_REPO was provided, but no Neovim config was found in the cloned repo."; \
+      echo "[error] Looked for: /tmp/dotfiles/.config/nvim and /tmp/dotfiles/nvim"; \
+      exit 1; \
+    fi; \
+    rm -rf "/home/${USERNAME}/.config/nvim"/*; \
+    cp -a "$NVIM_SRC"/* "/home/${USERNAME}/.config/nvim/"; \
+    rm -rf /tmp/dotfiles; \
+  else \
+    echo "DOTFILES_REPO is empty; using repo-owned Neovim config"; \
+  fi
 
 # Workspace directory convention for devcontainers.
 RUN set -euxo pipefail; \
     mkdir -p /workspaces; \
     chown -R "${USERNAME}:${USER_GID}" /home/${USERNAME} /workspaces
 
-COPY scripts/smoke-check.sh /workspaces/smoke-check.sh
+COPY scripts/sandbox /usr/local/bin/sandbox
 RUN set -euxo pipefail; \
-    chmod +x /workspaces/smoke-check.sh; \
-    chown "${USERNAME}:${USER_GID}" /workspaces/smoke-check.sh
+    chmod +x /usr/local/bin/sandbox; \
+    chown "${USERNAME}:${USER_GID}" /usr/local/bin/sandbox
 USER ${USERNAME}
 WORKDIR /workspaces
 
