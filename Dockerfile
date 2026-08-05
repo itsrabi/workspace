@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1.6
 
 # Fedora minimal-ish base. We keep the image lean but include common engineering tools.
-FROM fedora:40
+FROM fedora:44
 
 ARG USERNAME=developer
 ARG USER_UID=1000
@@ -36,6 +36,7 @@ RUN set -euxo pipefail; \
       tar \
       unzip \
       xz \
+      tree \
       which \
       procps-ng \
       util-linux \
@@ -45,6 +46,7 @@ RUN set -euxo pipefail; \
       # Editors / CLI tools \
       ripgrep \
       fzf \
+      bat \
       fd-find \
       # Common dev toolchains \
       gcc \
@@ -55,6 +57,13 @@ RUN set -euxo pipefail; \
       python3 \
       python3-pip; \
     dnf clean all; \
+    rm -rf /var/cache/dnf
+
+RUN set -euxo pipefail; \
+    sudo dnf -y install dnf-plugins-core; \
+    sudo dnf -y copr enable lihaohong/yazi; \
+    sudo dnf -y install yazi; \
+    sudo dnf clean all; \
     rm -rf /var/cache/dnf
 
 # Install pinned Neovim so vim.pack is available.

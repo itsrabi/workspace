@@ -1,0 +1,2 @@
+-- Filetype plugin for JSON.
+-- Intentionally empty in this cleanup.
