@@ -10,17 +10,28 @@ return {
             ensure_installed = {
                 "lua",
                 "vim",
+                "vimdoc",
                 "python",
                 "bash",
                 "markdown",
                 "markdown_inline",
                 "json",
+		"yaml",
+		"html",
+		"javascript",
+		"typescript",
+		"tsx",
+		"css",
+		"dockerfile",
             },
             auto_install = true,
             highlight = {
                 enable = true,
                 additional_vim_regex_highlighting = false,
             },
+	    indent = { 
+	        enable = true, 
+	    },
         })
     end,
 }

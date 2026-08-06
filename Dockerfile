@@ -30,6 +30,7 @@ RUN set -euxo pipefail; \
       bash \
       ca-certificates \
       curl \
+      diffutils \
       git \
       gzip \
       make \
@@ -37,7 +38,10 @@ RUN set -euxo pipefail; \
       unzip \
       xz \
       tree \
+      tmux \
       which \
+      xclip \
+      wl-clipboard \
       procps-ng \
       util-linux \
       sudo \
