@@ -44,6 +44,8 @@ RUN set -euxo pipefail; \
       wl-clipboard \
       procps-ng \
       util-linux \
+      rsync \
+      ip \
       sudo \
       shadow-utils \
       podman \
@@ -57,6 +59,8 @@ RUN set -euxo pipefail; \
       gcc-c++ \
       cmake \
       pkgconf-pkg-config \
+      poetry \
+      uv \
       # Often-needed interpreters \
       python3 \
       python3-pip; \

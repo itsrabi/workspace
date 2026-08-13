@@ -87,7 +87,7 @@ workspace-image: install
 	@echo "Tagging local image '$(IMAGE)' as '$(WORKSPACE_IMAGE)'"
 	@$(PODMAN) tag "$(IMAGE)" "$(WORKSPACE_IMAGE)"
 
-# Create/recreate the long-lived workspace container and run the repo-owned smoke script inside it.
+# Create/recreate the long-lived workspace container, honoring .devcontainer/devcontainer.json forwardPorts, then run the repo-owned smoke script inside it.
 workspace: workspace-image
 	powershell -NoProfile -ExecutionPolicy Bypass -File scripts/workspace.ps1 -Action Workspace -WorkspaceImage "$(WORKSPACE_IMAGE)" -WorkspaceContainer "$(WORKSPACE_CONTAINER)"
 

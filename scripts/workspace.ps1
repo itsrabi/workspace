@@ -56,6 +56,216 @@ function Get-PodmanRemoteSocketPath {
   return $out
 }
 
+function Get-DevContainerForwardPorts {
+  param(
+    [Parameter(Mandatory = $true)]
+    [string]$RepoRoot
+  )
+
+  $devContainerPath = Join-Path $RepoRoot '.devcontainer/devcontainer.json'
+  if (-not (Test-Path -LiteralPath $devContainerPath)) {
+    return @()
+  }
+
+  # Keep parsing narrow and boring: this repo's devcontainer.json uses whole-line
+  # JSONC comments, so stripping comment-only lines is sufficient.
+  $jsonWithComments = Get-Content -LiteralPath $devContainerPath -Raw
+  $json = ($jsonWithComments -split '\r?\n' | Where-Object { $_ -notmatch '^\s*//' }) -join "`n"
+  $config = $json | ConvertFrom-Json
+
+  if ($null -eq $config.forwardPorts) {
+    return @()
+  }
+
+  return @($config.forwardPorts)
+}
+
+function Get-PodmanPublishArgsFromForwardPorts {
+  param(
+    [Parameter(Mandatory = $true)]
+    [object[]]$ForwardPorts
+  )
+
+  $publishArgs = @()
+  foreach ($forwardPort in $ForwardPorts) {
+    $portSpec = [string]$forwardPort
+    if ($portSpec -match '^\d+$') {
+      $publishArgs += @('--publish', "${portSpec}:${portSpec}")
+      continue
+    }
+
+    if ($portSpec -match '^(?<start>\d+)-(?<end>\d+)$') {
+      $start = [int]$Matches.start
+      $end = [int]$Matches.end
+      if ($end -lt $start) {
+        throw "Invalid forwardPorts range '$portSpec' in .devcontainer/devcontainer.json"
+      }
+
+      $publishArgs += @('--publish', "${start}-${end}:${start}-${end}")
+      continue
+    }
+
+    throw "Unsupported forwardPorts entry '$portSpec' in .devcontainer/devcontainer.json. Expected a port number or start-end range."
+  }
+
+  return $publishArgs
+}
+
+function Get-ForwardPortSmokePorts {
+  param(
+    [Parameter(Mandatory = $true)]
+    [object[]]$ForwardPorts
+  )
+
+  $smokePorts = @()
+  foreach ($forwardPort in $ForwardPorts) {
+    $portSpec = [string]$forwardPort
+    if ($portSpec -match '^\d+$') {
+      $smokePorts += [int]$portSpec
+      continue
+    }
+
+    if ($portSpec -match '^(?<start>\d+)-(?<end>\d+)$') {
+      $start = [int]$Matches.start
+      $end = [int]$Matches.end
+      if ($end -lt $start) {
+        throw "Invalid forwardPorts range '$portSpec' in .devcontainer/devcontainer.json"
+      }
+
+      $smokePorts += $start
+      if ($end -ne $start) {
+        $smokePorts += $end
+      }
+      continue
+    }
+
+    throw "Unsupported forwardPorts entry '$portSpec' in .devcontainer/devcontainer.json. Expected a port number or start-end range."
+  }
+
+  return $smokePorts
+}
+
+function Start-WorkspacePortSmokeServer {
+  param(
+    [Parameter(Mandatory = $true)]
+    [string]$ContainerName,
+
+    [Parameter(Mandatory = $true)]
+    [int]$Port
+  )
+
+  $token = "workspace-port-smoke-$Port"
+  $serveDir = "/tmp/workspace-port-smoke-$Port"
+  $indexPath = "$serveDir/index.html"
+  $logPath = "/tmp/workspace-port-smoke-$Port.log"
+  $pidFile = "/tmp/workspace-port-smoke-$Port.pid"
+
+  $cmd = ('rm -rf ''{0}''; mkdir -p ''{0}''; printf ''%s'' ''{1}'' > ''{2}''; python3 -m http.server {3} --bind 0.0.0.0 --directory ''{0}'' > ''{4}'' 2>&1 & echo $! > ''{5}''' -f (Escape-BashSingleQuotes $serveDir), (Escape-BashSingleQuotes $token), (Escape-BashSingleQuotes $indexPath), $Port, (Escape-BashSingleQuotes $logPath), (Escape-BashSingleQuotes $pidFile))
+
+  & podman exec $ContainerName bash -lc $cmd 1>$null
+  if ($LASTEXITCODE -ne 0) {
+    throw "Failed to start forwarded-port smoke server on port $Port inside container '$ContainerName'"
+  }
+}
+
+function Stop-WorkspacePortSmokeServer {
+  param(
+    [Parameter(Mandatory = $true)]
+    [string]$ContainerName,
+
+    [Parameter(Mandatory = $true)]
+    [int]$Port
+  )
+
+  $pidFile = "/tmp/workspace-port-smoke-$Port.pid"
+  $cmd = ('if [ -f ''{0}'' ]; then kill $(cat ''{0}'') 2>/dev/null || true; rm -f ''{0}''; fi' -f (Escape-BashSingleQuotes $pidFile))
+
+  & podman exec $ContainerName bash -lc $cmd 1>$null 2>$null
+}
+
+function Get-WorkspaceHostSmokeCandidates {
+  $candidates = @('127.0.0.1')
+
+  try {
+    $machineIpLines = & podman machine ssh ip -4 -o addr show scope global 2>$null
+    if ($LASTEXITCODE -eq 0) {
+      foreach ($line in @($machineIpLines)) {
+        if ($line -match '\binet\s+(?<ip>\d+\.\d+\.\d+\.\d+)/') {
+          $ip = $Matches.ip
+          if (-not [string]::IsNullOrWhiteSpace($ip) -and $ip -ne '127.0.0.1') {
+            $candidates += $ip
+          }
+        }
+      }
+    }
+  } catch {
+  }
+
+  return @($candidates | Sort-Object -Unique)
+}
+
+
+function Assert-WorkspaceForwardPortsReachable {
+  param(
+    [Parameter(Mandatory = $true)]
+    [string]$ContainerName,
+
+    [Parameter(Mandatory = $true)]
+    [object[]]$ForwardPorts
+  )
+
+  $smokePorts = Get-ForwardPortSmokePorts -ForwardPorts $ForwardPorts
+  if ($smokePorts.Count -eq 0) {
+    return
+  }
+
+
+  $hostCandidates = Get-WorkspaceHostSmokeCandidates
+
+  Write-Host '== Host-side forwarded port smoke =='
+  foreach ($port in $smokePorts) {
+    Start-WorkspacePortSmokeServer -ContainerName $ContainerName -Port $port
+  }
+
+  try {
+    foreach ($port in $smokePorts) {
+      $expected = "workspace-port-smoke-$port"
+      $verified = $false
+
+      foreach ($candidateHost in $hostCandidates) {
+        $uri = "http://${candidateHost}:$port/"
+        $deadline = (Get-Date).AddSeconds(5)
+
+        while ((Get-Date) -lt $deadline) {
+          try {
+            $response = Invoke-WebRequest -UseBasicParsing -Uri $uri -TimeoutSec 2
+            if ($response.Content -eq $expected) {
+              $verified = $true
+              Write-Host "[ok] $uri -> $expected"
+              break
+            }
+          } catch {
+          }
+
+          Start-Sleep -Milliseconds 500
+        }
+
+        if ($verified) {
+          break
+        }
+      }
+
+      if (-not $verified) {
+        throw "Forwarded port smoke failed for port $port. Tried hosts: $($hostCandidates -join ', '). Expected body '$expected'."
+      }
+    }
+  } finally {
+    foreach ($port in $smokePorts) {
+      Stop-WorkspacePortSmokeServer -ContainerName $ContainerName -Port $port
+    }
+  }
+}
+
 function Require-WorkspaceContainerRunning {
   param(
     [Parameter(Mandatory = $true)]
@@ -118,6 +328,11 @@ if ($Action -eq 'Workspace') {
     '-w', '/workspaces'
   )
 
+  $forwardPorts = Get-DevContainerForwardPorts -RepoRoot $RepoRoot
+  if ($forwardPorts.Count -gt 0) {
+    $podmanRunArgs += Get-PodmanPublishArgsFromForwardPorts -ForwardPorts $forwardPorts
+  }
+
   foreach ($letter in $driveLetters) {
     $hostRoot = "${letter}:\\"
     $podmanRunArgs += @('-v', "${hostRoot}:/mnt/${letter}")
@@ -159,6 +374,10 @@ if ($Action -eq 'Workspace') {
   if ($smokeExit -ne 0) {
     # Propagate failure but leave the container running.
     exit $smokeExit
+  }
+
+  if ($forwardPorts.Count -gt 0) {
+    Assert-WorkspaceForwardPortsReachable -ContainerName $WorkspaceContainer -ForwardPorts $forwardPorts
   }
 
   exit 0

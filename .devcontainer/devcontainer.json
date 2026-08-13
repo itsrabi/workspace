@@ -21,6 +21,13 @@
   },
 
   "remoteUser": "developer",
+  // Forward common dev server ports to the Windows host.
+  // Ranges are forwarded to the same port number on the host.
+  "forwardPorts": [
+    "3000-3999",
+    "5000-5999",
+    "8000-8999"
+  ],
   "settings": {
     "terminal.integrated.defaultProfile.linux": "bash",
     "terminal.integrated.fontFamily": "Cascadia Code NF"
