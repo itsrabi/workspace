@@ -44,6 +44,7 @@ export HOME="$home_dir"
 
 repo_bashrc="$repo_root/dotfiles/.bashrc"
 repo_nvim="$repo_root/dotfiles/.config/nvim"
+repo_tmux="$repo_root/dotfiles/.config/tmux"
 xdg_config_home="${XDG_CONFIG_HOME:-$HOME/.config}"
 
 if [[ ! -f "$repo_bashrc" ]]; then
@@ -53,6 +54,11 @@ fi
 
 if [[ ! -d "$repo_nvim" ]]; then
   echo "Missing repo dotfile directory: $repo_nvim" >&2
+  exit 1
+fi
+
+if [[ ! -d "$repo_tmux" ]]; then
+  echo "Missing repo dotfile directory: $repo_tmux" >&2
   exit 1
 fi
 
@@ -81,6 +87,7 @@ link_target() {
 }
 
 link_target "$repo_nvim" "$xdg_config_home/nvim"
+link_target "$repo_tmux" "$xdg_config_home/tmux"
 link_target "$repo_bashrc" "$HOME/.bashrc"
 
 
