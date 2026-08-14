@@ -37,6 +37,8 @@ RUN set -euxo pipefail; \
       tar \
       unzip \
       xz \
+      nodejs \
+      npm \
       tree \
       tmux \
       which \
@@ -66,6 +68,14 @@ RUN set -euxo pipefail; \
       python3-pip; \
     dnf clean all; \
     rm -rf /var/cache/dnf
+RUN set -euxo pipefail; \
+    npm install -g --ignore-scripts @earendil-works/pi-coding-agent; \
+    command -v node; \
+    command -v npm; \
+    command -v pi; \
+    node --version; \
+    npm --version; \
+    pi --version
 
 RUN set -euxo pipefail; \
     sudo dnf -y install dnf-plugins-core; \
@@ -156,6 +166,13 @@ RUN set -euxo pipefail; \
     chown "${USERNAME}:${USER_GID}" /usr/local/bin/sandbox
 USER ${USERNAME}
 WORKDIR /workspaces
+RUN set -euxo pipefail; \
+    export HOME="/home/${USERNAME}" PI_SKIP_VERSION_CHECK=1 PI_TELEMETRY=0; \
+    cd "$HOME"; \
+    pi install npm:pi-web-access; \
+    pi install npm:@quintinshaw/pi-dynamic-workflows; \
+    pi install npm:@narumitw/pi-plan-mode; \
+    pi list
 
 # Quick sanity for image users.
 # (nvim is headless; `+q` exits immediately.)

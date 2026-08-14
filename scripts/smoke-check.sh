@@ -2,12 +2,23 @@
 set -euo pipefail
 
 echo "== Versions =="
-command -v nvim rg fd fzf yazi
+command -v nvim rg fd fzf yazi node npm pi
 nvim --version | head -n 5
 rg --version
 fd --version
 fzf --version
 yazi --version
+node --version
+npm --version
+pi --version
+
+echo "== Pi packages =="
+PI_LIST_OUTPUT="$(pi list)"
+printf '%s\n' "$PI_LIST_OUTPUT"
+printf '%s\n' "$PI_LIST_OUTPUT" | grep -Fq "pi-web-access"
+printf '%s\n' "$PI_LIST_OUTPUT" | grep -Fq "@quintinshaw/pi-dynamic-workflows"
+printf '%s\n' "$PI_LIST_OUTPUT" | grep -Fq "@narumitw/pi-plan-mode"
+
 echo "== Neovim headless smoke =="
 
 # Load the config and verify key plugin modules are importable.
