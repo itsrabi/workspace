@@ -1,2 +1,6 @@
 # Windows reserved device name captured as a working-tree entry
 NUL
+
+# git worktrees (local scratch checkouts)
+.worktrees/
+
