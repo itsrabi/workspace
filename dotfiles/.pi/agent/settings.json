@@ -1,0 +1,26 @@
+{
+  "packages": [
+    "npm:pi-web-access",
+    "npm:@quintinshaw/pi-dynamic-workflows",
+    "npm:pi-agent-browser-native",
+    "npm:@narumitw/pi-plan-mode",
+    "npm:pi-hashline-edit-pro",
+    "npm:effect",
+    "npm:typebox",
+    "npm:pi-subagents",
+    "npm:@juicesharp/rpiv-todo"
+  ],
+  "shellPath": "/bin/bash",
+  "extensions": [
+    "./extensions/model-selector-cost-units.ts",
+    "./extensions/clear-context-command.ts",
+    "./extensions/task-to-pr.ts",
+    "./extensions/pwsh-tool.ts",
+    "./extensions/background-terminals/index.ts"
+  ],
+  "theme": "tokyo-night",
+  "lastChangelogVersion": "0.84.2",
+  "defaultProvider": "azure-openai-responses",
+  "defaultModel": "gpt-5.4-nano",
+  "defaultThinkingLevel": "medium"
+}

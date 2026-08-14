@@ -45,6 +45,8 @@ export HOME="$home_dir"
 repo_bashrc="$repo_root/dotfiles/.bashrc"
 repo_nvim="$repo_root/dotfiles/.config/nvim"
 repo_tmux="$repo_root/dotfiles/.config/tmux"
+repo_pi="$repo_root/dotfiles/.pi"
+repo_pi_xdg_config_pi="$repo_root/dotfiles/.config/pi"
 xdg_config_home="${XDG_CONFIG_HOME:-$HOME/.config}"
 
 if [[ ! -f "$repo_bashrc" ]]; then
@@ -59,6 +61,16 @@ fi
 
 if [[ ! -d "$repo_tmux" ]]; then
   echo "Missing repo dotfile directory: $repo_tmux" >&2
+  exit 1
+fi
+
+if [[ ! -d "$repo_pi" ]]; then
+  echo "Missing repo dotfile directory: $repo_pi" >&2
+  exit 1
+fi
+
+if [[ ! -d "$repo_pi_xdg_config_pi" ]]; then
+  echo "Missing repo dotfile directory: $repo_pi_xdg_config_pi" >&2
   exit 1
 fi
 
@@ -89,6 +101,8 @@ link_target() {
 link_target "$repo_nvim" "$xdg_config_home/nvim"
 link_target "$repo_tmux" "$xdg_config_home/tmux"
 link_target "$repo_bashrc" "$HOME/.bashrc"
+link_target "$repo_pi" "$HOME/.pi"
+link_target "$repo_pi_xdg_config_pi" "$xdg_config_home/pi"
 
 
 # If the caller provided a staging HOME/XDG_CONFIG_HOME inside this repo,
