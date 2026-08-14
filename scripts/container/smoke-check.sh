@@ -28,6 +28,17 @@ printf '%s\n' "$PI_LIST_OUTPUT" | grep -Fq "pi-web-access"
 printf '%s\n' "$PI_LIST_OUTPUT" | grep -Fq "@quintinshaw/pi-dynamic-workflows"
 printf '%s\n' "$PI_LIST_OUTPUT" | grep -Fq "@narumitw/pi-plan-mode"
 
+echo "== Pi interactive crash guard =="
+set +e
+timeout 5s pi >/dev/null 2>&1
+rc=$?
+set -e
+# 124 = timeout (expected); 139 = segfault (failure)
+if [[ "$rc" -eq 139 ]]; then
+  echo "pi segfaulted in non-interactive stdin context" >&2
+  exit 1
+fi
+
 echo "== Neovim headless smoke =="
 nvim --headless "+lua assert(pcall(require, 'plenary.path'), 'missing plenary.path'); assert(pcall(require, 'harpoon'), 'missing harpoon'); assert(pcall(require, 'fzf-lua'), 'missing fzf-lua'); assert(pcall(require, 'nvim-web-devicons'), 'missing nvim-web-devicons'); assert(pcall(require, 'snacks'), 'missing snacks'); assert(pcall(require, 'alpha'), 'missing alpha'); assert(vim.fn.exists(':Alpha') == 2, 'missing :Alpha command'); assert(vim.g.colors_name ~= nil and vim.g.colors_name ~= '', 'colorscheme not set')" +q
 

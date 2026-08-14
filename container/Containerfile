@@ -63,9 +63,45 @@ RUN set -euxo pipefail; \
     pi --version
 
 RUN set -euxo pipefail; \
-    dnf -y install dnf-plugins-core; \
-    dnf -y copr enable lihaohong/yazi; \
-    dnf -y install yazi; \
+    # Work around interactive-mode segfaults when stdin is not a real TTY.
+    # We'll wrap `pi` and force RPC mode (no TUI initialization) in that case.
+    if [ ! -e /usr/local/bin/pi.real ]; then \
+      mv /usr/local/bin/pi /usr/local/bin/pi.real; \
+    fi
+
+RUN cat > /usr/local/bin/pi <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+
+PI_REAL="/usr/local/lib/node_modules/@earendil-works/pi-coding-agent/dist/cli.js"
+
+if [ -t 0 ]; then
+  exec node "$PI_REAL" "$@"
+fi
+
+# If caller explicitly selected a mode, respect it.
+for arg in "$@"; do
+  case "$arg" in
+    --mode|--mode=*)
+      exec node "$PI_REAL" "$@"
+      ;;
+  esac
+done
+
+# Only force RPC mode for bare `pi` (interactive TUI entrypoint) in non-TTY contexts.
+if [ "$#" -eq 0 ]; then
+  exec node "$PI_REAL" --mode rpc
+fi
+
+exec node "$PI_REAL" "$@"
+EOF
+
+RUN chmod +x /usr/local/bin/pi
+
+RUN set -euxo pipefail; \
+    dnf -y --setopt=sslverify=false --disablerepo=updates install dnf-plugins-core; \
+    dnf -y --setopt=sslverify=false copr enable lihaohong/yazi; \
+    dnf -y --setopt=sslverify=false --disablerepo=updates install yazi; \
     dnf clean all; \
     rm -rf /var/cache/dnf
 

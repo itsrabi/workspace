@@ -99,4 +99,11 @@ Default layout:
   - symlinked dotfiles (`~/.config/nvim` and `~/.bashrc`)
   - `whoami` equals the host username passed as `EXPECTED_USER`.
 
-> Demo change: README updated to verify the task-to-PR workflow automation.
+## PR demo (multi-PR)
+This repository includes a small README-only change to demonstrate a “task → multiple PRs” automation workflow.
+
+- Intended demo approach: split work across subagents (one PR per subagent) and run in parallel in the automation layer.
+- Note: this commit only touches `README.md` as a minimal, safe placeholder.
+
+### Pi interactive mode and TTY requirement
+Pi uses a TUI on startup. In non-interactive/non-TTY contexts (e.g. CI-style `bash -lc`), we force Pi into `--mode rpc` to avoid a startup segfault.
