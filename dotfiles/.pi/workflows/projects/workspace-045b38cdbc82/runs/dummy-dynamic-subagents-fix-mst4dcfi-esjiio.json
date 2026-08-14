@@ -1,0 +1,420 @@
+{
+  "runId": "dummy-dynamic-subagents-fix-mst4dcfi-esjiio",
+  "workflowName": "dummy_dynamic_subagents_fix",
+  "script": "export const meta = { name: 'dummy_dynamic_subagents_fix', description: 'Dynamic fan-out dummy tasks; rely on default model/provider to avoid batch-only model errors.' };\n\nconst agentNames = ['worker','scout','reviewer','planner','demo-scout','demo-deep-scout','demo-plan','demo-orchestrator','btw-agent'];\nconst count = (args?.count ?? 7);\nconst thinkingLevel = (args?.thinkingLevel ?? 'low');\n\nconst makePrompt = (i) => {\n  const sleepish = (i % 2 === 1);\n  if (sleepish) {\n    return `Task ${i}: Sleep 10 seconds (or simulate sleep), then respond exactly: HELLO_FROM_TASK_${i} DONE`;\n  }\n  return `Task ${i}: Respond exactly: HELLO_FROM_TASK_${i} DONE`;\n};\n\nconst tasks = Array.from({ length: count }, (_, i) => ({\n  idx: i,\n  agentName: agentNames[i % agentNames.length],\n  prompt: makePrompt(i),\n}));\n\nconst results = await parallel(\n  tasks.map(t => () => agent(t.prompt, { agent: t.agentName, thinkingLevel }))\n);\n\nreturn results;",
+  "args": {
+    "count": 9,
+    "thinkingLevel": "low"
+  },
+  "sessionId": "01a000f0-ade4-72bd-b2c9-a0647fa00514",
+  "status": "completed",
+  "tokenBudget": null,
+  "maxAgents": 20,
+  "agentTimeoutMs": null,
+  "concurrency": 6,
+  "agentRetries": 0,
+  "phases": [],
+  "agents": [
+    {
+      "id": 1,
+      "callId": "dummy-dynamic-subagents-fix-mst4dcfi-esjiio:0",
+      "label": "agent 1",
+      "prompt": "Task 0: Respond exactly: HELLO_FROM_TASK_0 DONE",
+      "status": "done",
+      "model": "azure-openai-responses/gpt-5.4-nano",
+      "history": [
+        {
+          "role": "user",
+          "kind": "text",
+          "text": "Task label: agent 1\n\nTask 0: Respond exactly: HELLO_FROM_TASK_0 DONE",
+          "timestamp": 1786722375778
+        },
+        {
+          "role": "assistant",
+          "kind": "text",
+          "text": "HELLO_FROM_TASK_0 DONE",
+          "timestamp": 1786722375781
+        }
+      ],
+      "resultPreview": "HELLO_FROM_TASK_0 DONE",
+      "tokens": 4026,
+      "tokenUsage": {
+        "input": 175,
+        "output": 11,
+        "cacheRead": 3840,
+        "cacheWrite": 0,
+        "total": 4026,
+        "cost": 0.00012555
+      },
+      "result": "HELLO_FROM_TASK_0 DONE",
+      "startedAt": "2026-08-14T15:46:15.747Z",
+      "endedAt": "2026-08-14T15:46:16.668Z"
+    },
+    {
+      "id": 2,
+      "callId": "dummy-dynamic-subagents-fix-mst4dcfi-esjiio:1",
+      "label": "agent 2",
+      "prompt": "Task 1: Sleep 10 seconds (or simulate sleep), then respond exactly: HELLO_FROM_TASK_1 DONE",
+      "status": "done",
+      "model": "azure-openai-responses/gpt-5.4-nano",
+      "history": [
+        {
+          "role": "user",
+          "kind": "text",
+          "text": "Task label: agent 2\n\nTask 1: Sleep 10 seconds (or simulate sleep), then respond exactly: HELLO_FROM_TASK_1 DONE",
+          "timestamp": 1786722375778
+        },
+        {
+          "role": "assistant",
+          "kind": "toolCall",
+          "toolName": "bash",
+          "text": "{\"command\":\"sleep 10\"}",
+          "timestamp": 1786722375781
+        },
+        {
+          "role": "tool",
+          "kind": "error",
+          "toolName": "bash",
+          "text": "No bash shell found. Options:\n  1. Install Git for Windows: https://git-scm.com/download/win\n  2. Add your bash to PATH (Cygwin, MSYS2, etc.)\n  3. Set shellPath in settings.json\n\nSearched Git Bash in:\n  C:\\Program Files\\Git\\bin\\bash.exe\n  C:\\Program Files (x86)\\Git\\bin\\bash.exe",
+          "isError": true,
+          "timestamp": 1786722378915
+        },
+        {
+          "role": "assistant",
+          "kind": "text",
+          "text": "HELLO_FROM_TASK_1 DONE",
+          "timestamp": 1786722378916
+        }
+      ],
+      "resultPreview": "HELLO_FROM_TASK_1 DONE",
+      "tokens": 8679,
+      "tokenUsage": {
+        "input": 4367,
+        "output": 472,
+        "cacheRead": 3840,
+        "cacheWrite": 0,
+        "total": 8679,
+        "cost": 0.0015402000000000002
+      },
+      "result": "HELLO_FROM_TASK_1 DONE",
+      "startedAt": "2026-08-14T15:46:15.747Z",
+      "endedAt": "2026-08-14T15:46:24.415Z"
+    },
+    {
+      "id": 3,
+      "callId": "dummy-dynamic-subagents-fix-mst4dcfi-esjiio:2",
+      "label": "agent 3",
+      "prompt": "Task 2: Respond exactly: HELLO_FROM_TASK_2 DONE",
+      "status": "done",
+      "model": "azure-openai-responses/gpt-5.4-nano",
+      "history": [
+        {
+          "role": "user",
+          "kind": "text",
+          "text": "Task label: agent 3\n\nTask 2: Respond exactly: HELLO_FROM_TASK_2 DONE",
+          "timestamp": 1786722375778
+        },
+        {
+          "role": "assistant",
+          "kind": "text",
+          "text": "HELLO_FROM_TASK_2 DONE",
+          "timestamp": 1786722375781
+        }
+      ],
+      "resultPreview": "HELLO_FROM_TASK_2 DONE",
+      "tokens": 4036,
+      "tokenUsage": {
+        "input": 687,
+        "output": 21,
+        "cacheRead": 3328,
+        "cacheWrite": 0,
+        "total": 4036,
+        "cost": 0.00023021
+      },
+      "result": "HELLO_FROM_TASK_2 DONE",
+      "startedAt": "2026-08-14T15:46:15.747Z",
+      "endedAt": "2026-08-14T15:46:17.587Z"
+    },
+    {
+      "id": 4,
+      "callId": "dummy-dynamic-subagents-fix-mst4dcfi-esjiio:3",
+      "label": "agent 4",
+      "prompt": "Task 3: Sleep 10 seconds (or simulate sleep), then respond exactly: HELLO_FROM_TASK_3 DONE",
+      "status": "done",
+      "model": "azure-openai-responses/gpt-5.4-nano",
+      "history": [
+        {
+          "role": "user",
+          "kind": "text",
+          "text": "Task label: agent 4\n\nTask 3: Sleep 10 seconds (or simulate sleep), then respond exactly: HELLO_FROM_TASK_3 DONE",
+          "timestamp": 1786722375778
+        },
+        {
+          "role": "assistant",
+          "kind": "toolCall",
+          "toolName": "bash",
+          "text": "{\"command\":\"sleep 10\",\"timeout\":15}",
+          "timestamp": 1786722375781
+        },
+        {
+          "role": "tool",
+          "kind": "error",
+          "toolName": "bash",
+          "text": "No bash shell found. Options:\n  1. Install Git for Windows: https://git-scm.com/download/win\n  2. Add your bash to PATH (Cygwin, MSYS2, etc.)\n  3. Set shellPath in settings.json\n\nSearched Git Bash in:\n  C:\\Program Files\\Git\\bin\\bash.exe\n  C:\\Program Files (x86)\\Git\\bin\\bash.exe",
+          "isError": true,
+          "timestamp": 1786722378110
+        },
+        {
+          "role": "assistant",
+          "kind": "text",
+          "text": "HELLO_FROM_TASK_3 DONE",
+          "timestamp": 1786722378110
+        }
+      ],
+      "resultPreview": "HELLO_FROM_TASK_3 DONE",
+      "tokens": 8700,
+      "tokenUsage": {
+        "input": 4376,
+        "output": 484,
+        "cacheRead": 3840,
+        "cacheWrite": 0,
+        "total": 8700,
+        "cost": 0.0015570000000000002
+      },
+      "result": "HELLO_FROM_TASK_3 DONE",
+      "startedAt": "2026-08-14T15:46:15.747Z",
+      "endedAt": "2026-08-14T15:46:24.756Z"
+    },
+    {
+      "id": 5,
+      "callId": "dummy-dynamic-subagents-fix-mst4dcfi-esjiio:4",
+      "label": "agent 5",
+      "prompt": "Task 4: Respond exactly: HELLO_FROM_TASK_4 DONE",
+      "status": "done",
+      "model": "azure-openai-responses/gpt-5.4-nano",
+      "history": [
+        {
+          "role": "user",
+          "kind": "text",
+          "text": "Task label: agent 5\n\nTask 4: Respond exactly: HELLO_FROM_TASK_4 DONE",
+          "timestamp": 1786722375778
+        },
+        {
+          "role": "assistant",
+          "kind": "text",
+          "text": "HELLO_FROM_TASK_4 DONE",
+          "timestamp": 1786722375781
+        }
+      ],
+      "resultPreview": "HELLO_FROM_TASK_4 DONE",
+      "tokens": 4036,
+      "tokenUsage": {
+        "input": 4015,
+        "output": 21,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "total": 4036,
+        "cost": 0.0008292500000000001
+      },
+      "result": "HELLO_FROM_TASK_4 DONE",
+      "startedAt": "2026-08-14T15:46:15.747Z",
+      "endedAt": "2026-08-14T15:46:17.440Z"
+    },
+    {
+      "id": 6,
+      "callId": "dummy-dynamic-subagents-fix-mst4dcfi-esjiio:5",
+      "label": "agent 6",
+      "prompt": "Task 5: Sleep 10 seconds (or simulate sleep), then respond exactly: HELLO_FROM_TASK_5 DONE",
+      "status": "done",
+      "model": "azure-openai-responses/gpt-5.4-nano",
+      "history": [
+        {
+          "role": "user",
+          "kind": "text",
+          "text": "Task label: agent 6\n\nTask 5: Sleep 10 seconds (or simulate sleep), then respond exactly: HELLO_FROM_TASK_5 DONE",
+          "timestamp": 1786722375778
+        },
+        {
+          "role": "assistant",
+          "kind": "toolCall",
+          "toolName": "bash",
+          "text": "{\"command\":\"sleep 10\"}",
+          "timestamp": 1786722375782
+        },
+        {
+          "role": "tool",
+          "kind": "error",
+          "toolName": "bash",
+          "text": "No bash shell found. Options:\n  1. Install Git for Windows: https://git-scm.com/download/win\n  2. Add your bash to PATH (Cygwin, MSYS2, etc.)\n  3. Set shellPath in settings.json\n\nSearched Git Bash in:\n  C:\\Program Files\\Git\\bin\\bash.exe\n  C:\\Program Files (x86)\\Git\\bin\\bash.exe",
+          "isError": true,
+          "timestamp": 1786722379191
+        },
+        {
+          "role": "assistant",
+          "kind": "text",
+          "text": "HELLO_FROM_TASK_5 DONE",
+          "timestamp": 1786722379192
+        }
+      ],
+      "resultPreview": "HELLO_FROM_TASK_5 DONE",
+      "tokens": 8458,
+      "tokenUsage": {
+        "input": 8215,
+        "output": 243,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "total": 8458,
+        "cost": 0.0019467500000000001
+      },
+      "result": "HELLO_FROM_TASK_5 DONE",
+      "startedAt": "2026-08-14T15:46:15.747Z",
+      "endedAt": "2026-08-14T15:46:21.507Z"
+    },
+    {
+      "id": 7,
+      "callId": "dummy-dynamic-subagents-fix-mst4dcfi-esjiio:6",
+      "label": "agent 7",
+      "prompt": "Task 6: Respond exactly: HELLO_FROM_TASK_6 DONE",
+      "status": "done",
+      "model": "azure-openai-responses/gpt-5.4-nano",
+      "history": [
+        {
+          "role": "user",
+          "kind": "text",
+          "text": "Task label: agent 7\n\nTask 6: Respond exactly: HELLO_FROM_TASK_6 DONE",
+          "timestamp": 1786722376674
+        },
+        {
+          "role": "assistant",
+          "kind": "text",
+          "text": "HELLO_FROM_TASK_6 DONE",
+          "timestamp": 1786722376675
+        }
+      ],
+      "resultPreview": "HELLO_FROM_TASK_6 DONE",
+      "tokens": 4036,
+      "tokenUsage": {
+        "input": 175,
+        "output": 21,
+        "cacheRead": 3840,
+        "cacheWrite": 0,
+        "total": 4036,
+        "cost": 0.00013805
+      },
+      "result": "HELLO_FROM_TASK_6 DONE",
+      "startedAt": "2026-08-14T15:46:16.668Z",
+      "endedAt": "2026-08-14T15:46:18.238Z"
+    },
+    {
+      "id": 8,
+      "callId": "dummy-dynamic-subagents-fix-mst4dcfi-esjiio:7",
+      "label": "agent 8",
+      "prompt": "Task 7: Sleep 10 seconds (or simulate sleep), then respond exactly: HELLO_FROM_TASK_7 DONE",
+      "status": "done",
+      "model": "azure-openai-responses/gpt-5.4-nano",
+      "history": [
+        {
+          "role": "user",
+          "kind": "text",
+          "text": "Task label: agent 8\n\nTask 7: Sleep 10 seconds (or simulate sleep), then respond exactly: HELLO_FROM_TASK_7 DONE",
+          "timestamp": 1786722377444
+        },
+        {
+          "role": "assistant",
+          "kind": "toolCall",
+          "toolName": "bash",
+          "text": "{\"command\":\"sleep 10 && echo HELLO_FROM_TASK_7 DONE\",\"timeout\":15}",
+          "timestamp": 1786722377445
+        },
+        {
+          "role": "tool",
+          "kind": "error",
+          "toolName": "bash",
+          "text": "No bash shell found. Options:\n  1. Install Git for Windows: https://git-scm.com/download/win\n  2. Add your bash to PATH (Cygwin, MSYS2, etc.)\n  3. Set shellPath in settings.json\n\nSearched Git Bash in:\n  C:\\Program Files\\Git\\bin\\bash.exe\n  C:\\Program Files (x86)\\Git\\bin\\bash.exe",
+          "isError": true,
+          "timestamp": 1786722381365
+        },
+        {
+          "role": "assistant",
+          "kind": "text",
+          "text": "HELLO_FROM_TASK_7 DONE",
+          "timestamp": 1786722381365
+        }
+      ],
+      "resultPreview": "HELLO_FROM_TASK_7 DONE",
+      "tokens": 8375,
+      "tokenUsage": {
+        "input": 4388,
+        "output": 147,
+        "cacheRead": 3840,
+        "cacheWrite": 0,
+        "total": 8375,
+        "cost": 0.00113815
+      },
+      "result": "HELLO_FROM_TASK_7 DONE",
+      "startedAt": "2026-08-14T15:46:17.440Z",
+      "endedAt": "2026-08-14T15:46:24.160Z"
+    },
+    {
+      "id": 9,
+      "callId": "dummy-dynamic-subagents-fix-mst4dcfi-esjiio:8",
+      "label": "agent 9",
+      "prompt": "Task 8: Respond exactly: HELLO_FROM_TASK_8 DONE",
+      "status": "done",
+      "model": "azure-openai-responses/gpt-5.4-nano",
+      "history": [
+        {
+          "role": "user",
+          "kind": "text",
+          "text": "Task label: agent 9\n\nTask 8: Respond exactly: HELLO_FROM_TASK_8 DONE",
+          "timestamp": 1786722377594
+        },
+        {
+          "role": "assistant",
+          "kind": "text",
+          "text": "HELLO_FROM_TASK_8 DONE",
+          "timestamp": 1786722377595
+        }
+      ],
+      "resultPreview": "HELLO_FROM_TASK_8 DONE",
+      "tokens": 4036,
+      "tokenUsage": {
+        "input": 175,
+        "output": 21,
+        "cacheRead": 3840,
+        "cacheWrite": 0,
+        "total": 4036,
+        "cost": 0.00013805
+      },
+      "result": "HELLO_FROM_TASK_8 DONE",
+      "startedAt": "2026-08-14T15:46:17.587Z",
+      "endedAt": "2026-08-14T15:46:19.505Z"
+    }
+  ],
+  "logs": [
+    "Logs persisted to C:\\Users\\raahmad\\.pi\\workflows\\projects\\workspace-045b38cdbc82\\runs\\dummy-dynamic-subagents-fix-mst4dcfi-esjiio.log"
+  ],
+  "result": [
+    "HELLO_FROM_TASK_0 DONE",
+    "HELLO_FROM_TASK_1 DONE",
+    "HELLO_FROM_TASK_2 DONE",
+    "HELLO_FROM_TASK_3 DONE",
+    "HELLO_FROM_TASK_4 DONE",
+    "HELLO_FROM_TASK_5 DONE",
+    "HELLO_FROM_TASK_6 DONE",
+    "HELLO_FROM_TASK_7 DONE",
+    "HELLO_FROM_TASK_8 DONE"
+  ],
+  "tokenUsage": {
+    "input": 26573,
+    "output": 1441,
+    "total": 54382,
+    "cost": 0.007643210000000001,
+    "cacheRead": 26368,
+    "cacheWrite": 0
+  },
+  "startedAt": "2026-08-14T15:46:15.729Z",
+  "updatedAt": "2026-08-14T15:46:24.761Z",
+  "completedAt": "2026-08-14T15:46:24.761Z",
+  "durationMs": 9023
+}

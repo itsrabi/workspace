@@ -1,0 +1,343 @@
+{
+  "runId": "dummy-dynamic-subagents-mst4czl8-lpvjnv",
+  "workflowName": "dummy_dynamic_subagents",
+  "script": "export const meta = { name: 'dummy_dynamic_subagents', description: 'Dynamically fan out dummy hello tasks across available pi subagents.' };\n\nconst agentNames = [\n  'worker',\n  'scout',\n  'reviewer',\n  'planner',\n  'demo-scout',\n  'demo-deep-scout',\n  'demo-plan',\n  'demo-orchestrator',\n  'btw-agent',\n];\n\nconst count = (args?.count ?? 7);\nconst model = (args?.model ?? 'gpt-5.4-nano');\nconst thinkingLevel = (args?.thinkingLevel ?? 'low');\n\nconst makePrompt = (i) => {\n  // Ensure each run is distinguishable in the output.\n  const sleepish = (i % 2 === 1);\n  if (sleepish) {\n    return `Task #${i}: Sleep for 10 seconds (or simulate sleep), then say: HELLO_FROM_TASK_${i}. End with DONE.`;\n  }\n  return `Task #${i}: Just say HELLO_FROM_TASK_${i}, then DONE.`;\n};\n\nconst tasks = Array.from({ length: count }, (_, i) => ({\n  idx: i,\n  agentName: agentNames[i % agentNames.length],\n  prompt: makePrompt(i),\n}));\n\nconst results = await parallel(\n  tasks.map(t => () => agent(t.prompt, { agent: t.agentName, model, thinkingLevel }))\n);\n\nlog(`Completed ${count} dummy subagent tasks.`);\nreturn results;",
+  "args": {
+    "count": 9,
+    "thinkingLevel": "low",
+    "model": "gpt-5.4-nano"
+  },
+  "sessionId": "01a000f0-ade4-72bd-b2c9-a0647fa00514",
+  "status": "completed",
+  "tokenBudget": null,
+  "agentTimeoutMs": null,
+  "concurrency": 8,
+  "agentRetries": 0,
+  "phases": [],
+  "agents": [
+    {
+      "id": 1,
+      "callId": "dummy-dynamic-subagents-mst4czl8-lpvjnv:0",
+      "label": "agent 1",
+      "prompt": "Task #0: Just say HELLO_FROM_TASK_0, then DONE.",
+      "status": "error",
+      "model": "openrouter/openai/gpt-5.4-nano:batch",
+      "history": [
+        {
+          "role": "user",
+          "kind": "text",
+          "text": "Task label: agent 1\n\nTask #0: Just say HELLO_FROM_TASK_0, then DONE.",
+          "timestamp": 1786722359192
+        },
+        {
+          "role": "assistant",
+          "kind": "error",
+          "text": "404: {\"message\":\"This model is only available through the Batch API. Use the /api/beta/batches endpoint instead.\",\"code\":404}",
+          "isError": true,
+          "timestamp": 1786722359209
+        }
+      ],
+      "resultPreview": "null",
+      "error": "Subagent produced no assistant output",
+      "errorCode": "AGENT_EMPTY_OUTPUT",
+      "recoverable": true,
+      "tokens": 14,
+      "result": null,
+      "startedAt": "2026-08-14T15:45:59.117Z",
+      "endedAt": "2026-08-14T15:45:59.607Z"
+    },
+    {
+      "id": 2,
+      "callId": "dummy-dynamic-subagents-mst4czl8-lpvjnv:1",
+      "label": "agent 2",
+      "prompt": "Task #1: Sleep for 10 seconds (or simulate sleep), then say: HELLO_FROM_TASK_1. End with DONE.",
+      "status": "error",
+      "model": "openrouter/openai/gpt-5.4-nano:batch",
+      "history": [
+        {
+          "role": "user",
+          "kind": "text",
+          "text": "Task label: agent 2\n\nTask #1: Sleep for 10 seconds (or simulate sleep), then say: HELLO_FROM_TASK_1. End with DONE.",
+          "timestamp": 1786722359192
+        },
+        {
+          "role": "assistant",
+          "kind": "error",
+          "text": "404: {\"message\":\"This model is only available through the Batch API. Use the /api/beta/batches endpoint instead.\",\"code\":404}",
+          "isError": true,
+          "timestamp": 1786722359211
+        }
+      ],
+      "resultPreview": "null",
+      "error": "Subagent produced no assistant output",
+      "errorCode": "AGENT_EMPTY_OUTPUT",
+      "recoverable": true,
+      "tokens": 25,
+      "result": null,
+      "startedAt": "2026-08-14T15:45:59.118Z",
+      "endedAt": "2026-08-14T15:45:59.653Z"
+    },
+    {
+      "id": 3,
+      "callId": "dummy-dynamic-subagents-mst4czl8-lpvjnv:2",
+      "label": "agent 3",
+      "prompt": "Task #2: Just say HELLO_FROM_TASK_2, then DONE.",
+      "status": "error",
+      "model": "openrouter/openai/gpt-5.4-nano:batch",
+      "history": [
+        {
+          "role": "user",
+          "kind": "text",
+          "text": "Task label: agent 3\n\nTask #2: Just say HELLO_FROM_TASK_2, then DONE.",
+          "timestamp": 1786722359192
+        },
+        {
+          "role": "assistant",
+          "kind": "error",
+          "text": "404: {\"message\":\"This model is only available through the Batch API. Use the /api/beta/batches endpoint instead.\",\"code\":404}",
+          "isError": true,
+          "timestamp": 1786722359212
+        }
+      ],
+      "resultPreview": "null",
+      "error": "Subagent produced no assistant output",
+      "errorCode": "AGENT_EMPTY_OUTPUT",
+      "recoverable": true,
+      "tokens": 14,
+      "result": null,
+      "startedAt": "2026-08-14T15:45:59.118Z",
+      "endedAt": "2026-08-14T15:45:59.633Z"
+    },
+    {
+      "id": 4,
+      "callId": "dummy-dynamic-subagents-mst4czl8-lpvjnv:3",
+      "label": "agent 4",
+      "prompt": "Task #3: Sleep for 10 seconds (or simulate sleep), then say: HELLO_FROM_TASK_3. End with DONE.",
+      "status": "error",
+      "model": "openrouter/openai/gpt-5.4-nano:batch",
+      "history": [
+        {
+          "role": "user",
+          "kind": "text",
+          "text": "Task label: agent 4\n\nTask #3: Sleep for 10 seconds (or simulate sleep), then say: HELLO_FROM_TASK_3. End with DONE.",
+          "timestamp": 1786722359192
+        },
+        {
+          "role": "assistant",
+          "kind": "error",
+          "text": "404: {\"message\":\"This model is only available through the Batch API. Use the /api/beta/batches endpoint instead.\",\"code\":404}",
+          "isError": true,
+          "timestamp": 1786722359212
+        }
+      ],
+      "resultPreview": "null",
+      "error": "Subagent produced no assistant output",
+      "errorCode": "AGENT_EMPTY_OUTPUT",
+      "recoverable": true,
+      "tokens": 25,
+      "result": null,
+      "startedAt": "2026-08-14T15:45:59.118Z",
+      "endedAt": "2026-08-14T15:45:59.680Z"
+    },
+    {
+      "id": 5,
+      "callId": "dummy-dynamic-subagents-mst4czl8-lpvjnv:4",
+      "label": "agent 5",
+      "prompt": "Task #4: Just say HELLO_FROM_TASK_4, then DONE.",
+      "status": "error",
+      "model": "openrouter/openai/gpt-5.4-nano:batch",
+      "history": [
+        {
+          "role": "user",
+          "kind": "text",
+          "text": "Task label: agent 5\n\nTask #4: Just say HELLO_FROM_TASK_4, then DONE.",
+          "timestamp": 1786722359192
+        },
+        {
+          "role": "assistant",
+          "kind": "error",
+          "text": "404: {\"message\":\"This model is only available through the Batch API. Use the /api/beta/batches endpoint instead.\",\"code\":404}",
+          "isError": true,
+          "timestamp": 1786722359213
+        }
+      ],
+      "resultPreview": "null",
+      "error": "Subagent produced no assistant output",
+      "errorCode": "AGENT_EMPTY_OUTPUT",
+      "recoverable": true,
+      "tokens": 14,
+      "result": null,
+      "startedAt": "2026-08-14T15:45:59.118Z",
+      "endedAt": "2026-08-14T15:45:59.662Z"
+    },
+    {
+      "id": 6,
+      "callId": "dummy-dynamic-subagents-mst4czl8-lpvjnv:5",
+      "label": "agent 6",
+      "prompt": "Task #5: Sleep for 10 seconds (or simulate sleep), then say: HELLO_FROM_TASK_5. End with DONE.",
+      "status": "error",
+      "model": "openrouter/openai/gpt-5.4-nano:batch",
+      "history": [
+        {
+          "role": "user",
+          "kind": "text",
+          "text": "Task label: agent 6\n\nTask #5: Sleep for 10 seconds (or simulate sleep), then say: HELLO_FROM_TASK_5. End with DONE.",
+          "timestamp": 1786722359192
+        },
+        {
+          "role": "assistant",
+          "kind": "error",
+          "text": "404: {\"message\":\"This model is only available through the Batch API. Use the /api/beta/batches endpoint instead.\",\"code\":404}",
+          "isError": true,
+          "timestamp": 1786722359216
+        }
+      ],
+      "resultPreview": "null",
+      "error": "Subagent produced no assistant output",
+      "errorCode": "AGENT_EMPTY_OUTPUT",
+      "recoverable": true,
+      "tokens": 25,
+      "result": null,
+      "startedAt": "2026-08-14T15:45:59.118Z",
+      "endedAt": "2026-08-14T15:45:59.691Z"
+    },
+    {
+      "id": 7,
+      "callId": "dummy-dynamic-subagents-mst4czl8-lpvjnv:6",
+      "label": "agent 7",
+      "prompt": "Task #6: Just say HELLO_FROM_TASK_6, then DONE.",
+      "status": "error",
+      "model": "openrouter/openai/gpt-5.4-nano:batch",
+      "history": [
+        {
+          "role": "user",
+          "kind": "text",
+          "text": "Task label: agent 7\n\nTask #6: Just say HELLO_FROM_TASK_6, then DONE.",
+          "timestamp": 1786722359192
+        },
+        {
+          "role": "assistant",
+          "kind": "error",
+          "text": "404: {\"message\":\"This model is only available through the Batch API. Use the /api/beta/batches endpoint instead.\",\"code\":404}",
+          "isError": true,
+          "timestamp": 1786722359216
+        }
+      ],
+      "resultPreview": "null",
+      "error": "Subagent produced no assistant output",
+      "errorCode": "AGENT_EMPTY_OUTPUT",
+      "recoverable": true,
+      "tokens": 14,
+      "result": null,
+      "startedAt": "2026-08-14T15:45:59.119Z",
+      "endedAt": "2026-08-14T15:45:59.668Z"
+    },
+    {
+      "id": 8,
+      "callId": "dummy-dynamic-subagents-mst4czl8-lpvjnv:7",
+      "label": "agent 8",
+      "prompt": "Task #7: Sleep for 10 seconds (or simulate sleep), then say: HELLO_FROM_TASK_7. End with DONE.",
+      "status": "error",
+      "model": "openrouter/openai/gpt-5.4-nano:batch",
+      "history": [
+        {
+          "role": "user",
+          "kind": "text",
+          "text": "Task label: agent 8\n\nTask #7: Sleep for 10 seconds (or simulate sleep), then say: HELLO_FROM_TASK_7. End with DONE.",
+          "timestamp": 1786722359192
+        },
+        {
+          "role": "assistant",
+          "kind": "error",
+          "text": "404: {\"message\":\"This model is only available through the Batch API. Use the /api/beta/batches endpoint instead.\",\"code\":404}",
+          "isError": true,
+          "timestamp": 1786722359216
+        }
+      ],
+      "resultPreview": "null",
+      "error": "Subagent produced no assistant output",
+      "errorCode": "AGENT_EMPTY_OUTPUT",
+      "recoverable": true,
+      "tokens": 25,
+      "result": null,
+      "startedAt": "2026-08-14T15:45:59.119Z",
+      "endedAt": "2026-08-14T15:45:59.700Z"
+    },
+    {
+      "id": 9,
+      "callId": "dummy-dynamic-subagents-mst4czl8-lpvjnv:8",
+      "label": "agent 9",
+      "prompt": "Task #8: Just say HELLO_FROM_TASK_8, then DONE.",
+      "status": "error",
+      "model": "openrouter/openai/gpt-5.4-nano:batch",
+      "history": [
+        {
+          "role": "user",
+          "kind": "text",
+          "text": "Task label: agent 9\n\nTask #8: Just say HELLO_FROM_TASK_8, then DONE.",
+          "timestamp": 1786722359622
+        },
+        {
+          "role": "assistant",
+          "kind": "error",
+          "text": "404: {\"message\":\"This model is only available through the Batch API. Use the /api/beta/batches endpoint instead.\",\"code\":404}",
+          "isError": true,
+          "timestamp": 1786722359623
+        }
+      ],
+      "resultPreview": "null",
+      "error": "Subagent produced no assistant output",
+      "errorCode": "AGENT_EMPTY_OUTPUT",
+      "recoverable": true,
+      "tokens": 14,
+      "result": null,
+      "startedAt": "2026-08-14T15:45:59.613Z",
+      "endedAt": "2026-08-14T15:45:59.705Z"
+    }
+  ],
+  "logs": [
+    "agent agent 1 attempt 1/1 failed: Subagent produced no assistant output",
+    "agent \"agent 1\" exhausted 1 attempt: AGENT_EMPTY_OUTPUT Subagent produced no assistant output",
+    "agent agent 3 attempt 1/1 failed: Subagent produced no assistant output",
+    "agent \"agent 3\" exhausted 1 attempt: AGENT_EMPTY_OUTPUT Subagent produced no assistant output",
+    "agent agent 2 attempt 1/1 failed: Subagent produced no assistant output",
+    "agent \"agent 2\" exhausted 1 attempt: AGENT_EMPTY_OUTPUT Subagent produced no assistant output",
+    "agent agent 5 attempt 1/1 failed: Subagent produced no assistant output",
+    "agent \"agent 5\" exhausted 1 attempt: AGENT_EMPTY_OUTPUT Subagent produced no assistant output",
+    "agent agent 7 attempt 1/1 failed: Subagent produced no assistant output",
+    "agent \"agent 7\" exhausted 1 attempt: AGENT_EMPTY_OUTPUT Subagent produced no assistant output",
+    "agent agent 4 attempt 1/1 failed: Subagent produced no assistant output",
+    "agent \"agent 4\" exhausted 1 attempt: AGENT_EMPTY_OUTPUT Subagent produced no assistant output",
+    "agent agent 6 attempt 1/1 failed: Subagent produced no assistant output",
+    "agent \"agent 6\" exhausted 1 attempt: AGENT_EMPTY_OUTPUT Subagent produced no assistant output",
+    "agent agent 8 attempt 1/1 failed: Subagent produced no assistant output",
+    "agent \"agent 8\" exhausted 1 attempt: AGENT_EMPTY_OUTPUT Subagent produced no assistant output",
+    "agent agent 9 attempt 1/1 failed: Subagent produced no assistant output",
+    "agent \"agent 9\" exhausted 1 attempt: AGENT_EMPTY_OUTPUT Subagent produced no assistant output",
+    "Completed 9 dummy subagent tasks.",
+    "Logs persisted to C:\\Users\\raahmad\\.pi\\workflows\\projects\\workspace-045b38cdbc82\\runs\\dummy-dynamic-subagents-mst4czl8-lpvjnv.log"
+  ],
+  "result": [
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null
+  ],
+  "tokenUsage": {
+    "input": 0,
+    "output": 0,
+    "total": 170,
+    "cost": 0,
+    "cacheRead": 0,
+    "cacheWrite": 0
+  },
+  "startedAt": "2026-08-14T15:45:59.089Z",
+  "updatedAt": "2026-08-14T15:45:59.720Z",
+  "completedAt": "2026-08-14T15:45:59.720Z",
+  "durationMs": 610
+}

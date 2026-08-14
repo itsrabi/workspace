@@ -97,7 +97,7 @@ RUN set -euxo pipefail; \
     bash /opt/workspace/scripts/install/link-dotfiles.sh --repo-root /opt/workspace --home "/home/${USERNAME}"; \
     test "$(realpath "/home/${USERNAME}/.config/nvim")" = "/opt/workspace/dotfiles/.config/nvim"; \
     test "$(realpath "/home/${USERNAME}/.bashrc")" = "/opt/workspace/dotfiles/.bashrc"; \
-    chown -R "${USERNAME}:${USER_GID}" "/home/${USERNAME}" /workspaces
+    chown -R "${USERNAME}:${USER_GID}" "/home/${USERNAME}" /workspaces /opt/workspace/dotfiles/.pi /opt/workspace/dotfiles/.config/pi
 
 USER ${USERNAME}
 WORKDIR /workspaces
@@ -108,5 +108,11 @@ RUN set -euxo pipefail; \
     pi install npm:pi-web-access; \
     pi install npm:@quintinshaw/pi-dynamic-workflows; \
     pi install npm:@narumitw/pi-plan-mode; \
+    pi install npm:pi-agent-browser-native; \
+    pi install npm:pi-hashline-edit-pro; \
+    pi install npm:effect; \
+    pi install npm:typebox; \
+    pi install npm:pi-subagents; \
+    pi install npm:@juicesharp/rpiv-todo; \
     pi list; \
     nvim --headless "+q"
