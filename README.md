@@ -98,3 +98,5 @@ Default layout:
   - Pi agent packages
   - symlinked dotfiles (`~/.config/nvim` and `~/.bashrc`)
   - `whoami` equals the host username passed as `EXPECTED_USER`.
+
+> Demo change: README updated to verify the task-to-PR workflow automation.
