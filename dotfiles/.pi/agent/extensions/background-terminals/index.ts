@@ -454,10 +454,14 @@ export default function (pi: ExtensionAPI) {
           };
         },
         subscribeTo: (id, listener) => {
-          const snap = manager.view.get(id);
-          return snap
-            ? manager.view.subscribeTo(id, listener)
-            : tmuxRead.view.subscribeTo(id, listener);
+          // Subscribe to both sources so we don't miss the moment an id moves
+          // between the manager-backed model and the tmux subagent read model.
+          const u1 = manager.view.subscribeTo(id, listener);
+          const u2 = tmuxRead.view.subscribeTo(id, listener);
+          return () => {
+            u1();
+            u2();
+          };
         },
         requestKill: (id) => {
           const snap = manager.view.get(id);
