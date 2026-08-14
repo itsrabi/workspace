@@ -80,23 +80,23 @@ RUN set -euxo pipefail; \
     (dnf -y install --setopt=install_weak_deps=false glibc-langpack-en || true); \
     localedef -i en_US -f UTF-8 en_US.UTF-8 || true
 
-COPY dotfiles/ /opt/dev-base-env/dotfiles/
-COPY bin/ /opt/dev-base-env/bin/
-COPY scripts/install/link-dotfiles.sh /opt/dev-base-env/scripts/install/link-dotfiles.sh
+COPY dotfiles/ /opt/workspace/dotfiles/
+COPY bin/ /opt/workspace/bin/
+COPY scripts/install/link-dotfiles.sh /opt/workspace/scripts/install/link-dotfiles.sh
 
 RUN set -euxo pipefail; \
-    chmod +x /opt/dev-base-env/scripts/install/link-dotfiles.sh; \
+    chmod +x /opt/workspace/scripts/install/link-dotfiles.sh; \
     groupadd --gid "$USER_GID" "$USERNAME"; \
     useradd --uid "$USER_UID" --gid "$USER_GID" -m "$USERNAME" -s /bin/bash; \
     usermod -aG wheel "$USERNAME"; \
     echo "%wheel ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/99-wheel-nopasswd; \
     chmod 0440 /etc/sudoers.d/99-wheel-nopasswd; \
     mkdir -p /workspaces; \
-    install -m 0755 /opt/dev-base-env/bin/sandbox /usr/local/bin/sandbox; \
+    install -m 0755 /opt/workspace/bin/sandbox /usr/local/bin/sandbox; \
     rm -f "/home/${USERNAME}/.bashrc"; \
-    bash /opt/dev-base-env/scripts/install/link-dotfiles.sh --repo-root /opt/dev-base-env --home "/home/${USERNAME}"; \
-    test "$(realpath "/home/${USERNAME}/.config/nvim")" = "/opt/dev-base-env/dotfiles/.config/nvim"; \
-    test "$(realpath "/home/${USERNAME}/.bashrc")" = "/opt/dev-base-env/dotfiles/.bashrc"; \
+    bash /opt/workspace/scripts/install/link-dotfiles.sh --repo-root /opt/workspace --home "/home/${USERNAME}"; \
+    test "$(realpath "/home/${USERNAME}/.config/nvim")" = "/opt/workspace/dotfiles/.config/nvim"; \
+    test "$(realpath "/home/${USERNAME}/.bashrc")" = "/opt/workspace/dotfiles/.bashrc"; \
     chown -R "${USERNAME}:${USER_GID}" "/home/${USERNAME}" /workspaces
 
 USER ${USERNAME}

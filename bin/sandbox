@@ -55,14 +55,13 @@ create_container() {
       --hostname "$container_name" \
       -w /workspace \
       -v "${source_dir}:/workspace" \
-      --label "dev-base-env.role=sandbox" \
-      --label "dev-base-env.source=${source_dir}" \
-      "$SANDBOX_IMAGE_TAG" \
+      --label "sandbox.role=sandbox" 
+      --label "sandbox.source=${source_dir}" 
       sleep infinity
     return 0
   fi
 
-  other_source_dir="$(podman inspect "$container_name" --format '{{ index .Config.Labels "dev-base-env.source" }}' 2>/dev/null || true)"
+  other_source_dir="$(podman inspect "$container_name" --format '{{ index .Config.Labels "sandbox.source" }}' 2>/dev/null || true)"
   if [[ "$other_source_dir" == "$source_dir" ]]; then
     return 0
   fi

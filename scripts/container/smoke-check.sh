@@ -18,8 +18,8 @@ if [[ -n "${EXPECTED_USER:-}" ]]; then
 fi
 test -L "$HOME/.config/nvim"
 test -L "$HOME/.bashrc"
-test "$(realpath "$HOME/.config/nvim")" = "/opt/dev-base-env/dotfiles/.config/nvim"
-test "$(realpath "$HOME/.bashrc")" = "/opt/dev-base-env/dotfiles/.bashrc"
+test "$(realpath "$HOME/.config/nvim")" = "/opt/workspace/dotfiles/.config/nvim"
+test "$(realpath "$HOME/.bashrc")" = "/opt/workspace/dotfiles/.bashrc"
 
 echo "== Pi packages =="
 PI_LIST_OUTPUT="$(pi list)"
