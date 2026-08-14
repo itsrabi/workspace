@@ -1,0 +1,86 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+usage() {
+  echo "Usage: sandbox {create|run}" >&2
+}
+
+if [[ "${1:-}" != "create" && "${1:-}" != "run" ]]; then
+  usage
+  exit 64
+fi
+
+subcommand="$1"
+
+source_dir="$(pwd -P)"
+container_name="$(basename "$source_dir")"
+
+if [[ ! "$container_name" =~ ^[A-Za-z0-9][A-Za-z0-9_.-]*$ ]]; then
+  echo "Unsupported directory name for sandbox container: ${container_name}" >&2
+  exit 2
+fi
+
+if [[ -z "${CONTAINER_HOST:-}" && ! -e /run/podman/podman.sock ]]; then
+  echo "sandbox requires a mounted host Podman socket; rerun make container-start from the host" >&2
+  exit 69
+fi
+
+# When invoked from inside a workspace, Podman runs on the host.
+# Therefore the bind-mount source path must exist on the host filesystem.
+# Windows workspaces present host paths under /mnt/<drive>/..., while Linux workspaces
+# should set SANDBOX_WORKSPACE_ROOT to the mounted host-visible root.
+if [[ "$source_dir" =~ ^/mnt/[A-Za-z]/.* ]]; then
+  :
+elif [[ -n "${SANDBOX_WORKSPACE_ROOT:-}" ]]; then
+  case "$source_dir" in
+    "$SANDBOX_WORKSPACE_ROOT"|"$SANDBOX_WORKSPACE_ROOT"/*)
+      :
+      ;;
+    *)
+      echo "sandbox source directory must be under SANDBOX_WORKSPACE_ROOT ($SANDBOX_WORKSPACE_ROOT)" >&2
+      exit 70
+      ;;
+  esac
+else
+  echo "sandbox source directory must be under /mnt/<drive>/... (Windows) or set SANDBOX_WORKSPACE_ROOT for Linux workspaces" >&2
+  exit 70
+fi
+
+SANDBOX_IMAGE_TAG="${SANDBOX_IMAGE:-workspace:local}"
+
+create_container() {
+  if ! podman container exists "$container_name" >/dev/null 2>&1; then
+    podman create \
+      --name "$container_name" \
+      --hostname "$container_name" \
+      -w /workspace \
+      -v "${source_dir}:/workspace" \
+      --label "dev-base-env.role=sandbox" \
+      --label "dev-base-env.source=${source_dir}" \
+      "$SANDBOX_IMAGE_TAG" \
+      sleep infinity
+    return 0
+  fi
+
+  other_source_dir="$(podman inspect "$container_name" --format '{{ index .Config.Labels "dev-base-env.source" }}' 2>/dev/null || true)"
+  if [[ "$other_source_dir" == "$source_dir" ]]; then
+    return 0
+  fi
+
+  echo "Container name collision: ${container_name} already maps ${other_source_dir}" >&2
+  exit 3
+}
+
+if [[ "$subcommand" == "create" ]]; then
+  create_container
+  exit 0
+fi
+
+# run
+create_container
+
+if [[ "$(podman inspect "$container_name" --format '{{ .State.Running }}' 2>/dev/null || true)" != "true" ]]; then
+  podman start "$container_name" >/dev/null
+fi
+
+exec podman exec -it "$container_name" bash

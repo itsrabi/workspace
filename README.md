@@ -1,106 +1,100 @@
 # Fedora Dev Container Base (Podman + Neovim)
 
-This repo builds a **Fedora-based devcontainer base image** meant to be extended per-project.
+This repo builds a **Fedora-based devcontainer base image** intended to be extended per-project.
 
-It installs (base image):
-- `nvim` (Neovim)
-- `rg` (ripgrep)
-- `fd` (`fd-find`)
-- Plus common software-engineering utilities (see **Installed packages (base image)** section).
+Key architecture (per `AGENTS.md`):
+- **Repo-owned dotfiles** live in `dotfiles/` and are installed by `scripts/install/link-dotfiles.sh`.
+- **Container definition** lives in `container/Containerfile` (with VS Code config in `container/devcontainer.json`).
+- **Container/local workflows** live in `scripts/container/*`.
+- **User-facing workflows** live in `Makefile`.
 
 ## What you get
-- A `Dockerfile` that produces the base image.
-- A Dev Containers config stub at `.devcontainer/devcontainer.json` (optional for VS Code).
-- A GitHub Actions workflow to build/push to Azure Container Registry (ACR): `.github/workflows/build-and-push-acr.yml`.
-- A local developer workflow via `make` (`install`, `smoke`, `workspace`, `sandbox`).
+ - A `container/Containerfile` image that installs:
+   - Neovim (`v0.12.4`)
+   - `rg`, `fd-find`, `fzf`, `yazi`
+   - common tooling (see the Containerfile + smoke script)
+   - Pi agent + required Pi packages
 
-## Quickstart (recommended)
-### 1) Create the image
-Your first step is `make install`.
+## Supported workflows
 
-`make install` builds the image from the `Dockerfile` as `devcontainer-base-fedora:local`.
-
+### Native (Fedora-family Linux)
+1) Bootstrap host tooling and link dotfiles:
 ```bash
 make install
 ```
 
-### 2) Enter a disposable container
+### Container workflows (host + Podman)
+All container workflows are based on the local image tag:
+- **Local image:** `workspace:local`
+- **Workspace container name:** `workspace`
+
+Build + smoke:
 ```bash
-make run
+make container-build
+make container-smoke
 ```
 
-### 3) Smoke-test the image (optional)
+Start + use:
 ```bash
-make smoke
+make container-start
+make container-shell
 ```
 
-`make smoke` runs `scripts/smoke-check.sh` via a bind mount.
-
-### 4) Create the long-lived workspace container
+Lifecycle helpers:
 ```bash
-make workspace
+make container-stop
+make container-rm
+make container-rebuild
 ```
 
-`make workspace` retags the base image and creates/runs the long-lived `fedora-workspace` container.
-
-### 5) Sandbox the current directory
+Per-directory sandbox (end-user command):
 ```bash
 make sandbox
 ```
 
-`make sandbox` is a host convenience wrapper around the in-container `sandbox run` flow.
-
-## In-container sandbox rule
-Inside `fedora-workspace`, `sandbox create` / `sandbox run` must be launched from a **host-mounted** path under:
-- `/mnt/<drive>/...`
-
-This matches the repo's `scripts/sandbox` behavior: the host Podman daemon is responsible for creating the bind mount, so container-only paths (for example `/workspaces/...` inside the container) are not sufficient.
-
-## Neovim configuration (repo-owned default)
-By default, the image ships a canonical Neovim config from this repository at:
-- `configs/nvim/`
-
-Default layout:
-- `configs/nvim/init.lua` (thin entrypoint; sets leaders, then `require("config")`)
-- `configs/nvim/lua/config/*` (core modules)
-- `configs/nvim/lua/plugins/*` (category spec files aggregated by `configs/nvim/lua/config/pack.lua`)
-- `configs/nvim/lua/utils/*`
-- `configs/nvim/lua/lsp/*`
-- `configs/nvim/after/ftplugin/*`
-
-The repo-owned default uses Neovim's built-in `vim.pack` (not a third-party plugin manager).
-
-### Build-time override via your dotfiles
-You may override the default Neovim config at build time using only:
-- `DOTFILES_REPO`
-- `DOTFILES_REV`
-
-Example:
+### Push to ACR
 ```bash
-make build \
-  DOTFILES_REPO="https://github.com/<you>/dotfiles.git" \
-  DOTFILES_REV="master"
+make push
 ```
-
-Only `DOTFILES_REPO` and `DOTFILES_REV` are supported for build-time Neovim overrides.
-## Container image name
-Local image tag:
-- `devcontainer-base-fedora:local`
-
-(Override via `make IMAGE=...`.)
-
-## ACR CI/CD
-See `.github/workflows/build-and-push-acr.yml`.
-
-It expects placeholder secrets such as:
+You must set:
 - `ACR_LOGIN_SERVER`
 - `ACR_USERNAME`
 - `ACR_PASSWORD`
 
-Optional dotfiles override secrets:
-- `DOTFILES_REPO`
-- `DOTFILES_REV` (defaults to `master`)
+By default, it pushes to ACR repo `workspace` with tag `latest`.
+
+## In-container sandbox rule
+The `bin/sandbox` command creates/uses per-directory containers by bind-mounting a host-visible path.
+
+- **Windows host:** run `make sandbox` (or the sandbox action) from the repo root.
+  The in-container sandbox flow requires host-visible paths under `/mnt/<drive>/...`.
+- **Linux host:** the workspace lifecycle mounts `$WORKSPACE_ROOT` into the workspace container at the same absolute path.
+  `bin/sandbox` requires the current directory to be under that root.
+
+## Neovim configuration (repo-owned default)
+Neovim source of truth is:
+- `dotfiles/.config/nvim/`
+
+Default layout:
+- `dotfiles/.config/nvim/init.lua` (thin entrypoint; calls `require("main")`)
+- `dotfiles/.config/nvim/lua/main/core/*`
+- `dotfiles/.config/nvim/lua/main/plugins/*`
+- `dotfiles/.config/nvim/after/ftplugin/*`
+
+`dotfiles/.config/nvim` is installed into the image and linked into `$HOME/.config/nvim` as a symlink.
+
+## Where the implementations live
+- Dotfile linking: `scripts/install/link-dotfiles.sh`
+- Native installer: `scripts/install/linux.sh`
+- Container smoke validation: `scripts/container/smoke-check.sh`
+- Workspace lifecycle:
+  - Windows host: `scripts/container/workspace.ps1`
+  - Linux host: `scripts/container/workspace.sh`
+- In-image user/prompt behavior: `dotfiles/.bashrc`
 
 ## Notes
-- The container runs as the non-root user `developer`.
-- The working directory inside the container is `/workspaces`.
+- Container smoke validates:
+  - tool availability
+  - Pi agent packages
+  - symlinked dotfiles (`~/.config/nvim` and `~/.bashrc`)
+  - `whoami` equals the host username passed as `EXPECTED_USER`.

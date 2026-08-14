@@ -1,0 +1,112 @@
+# syntax=docker/dockerfile:1.6
+
+FROM fedora:44
+
+ARG USERNAME=workspace
+ARG USER_UID=1000
+ARG USER_GID=1000
+
+ENV LANG=en_US.UTF-8 \
+    LC_ALL=en_US.UTF-8 \
+    SHELL=/bin/bash \
+    PI_SKIP_VERSION_CHECK=1 \
+    PI_TELEMETRY=0
+
+RUN set -euxo pipefail; \
+    dnf -y install --setopt=install_weak_deps=false \
+      bash \
+      ca-certificates \
+      curl \
+      diffutils \
+      git \
+      gzip \
+      make \
+      tar \
+      unzip \
+      xz \
+      nodejs \
+      npm \
+      tree \
+      tmux \
+      which \
+      xclip \
+      wl-clipboard \
+      procps-ng \
+      util-linux \
+      rsync \
+      iproute \
+      sudo \
+      shadow-utils \
+      podman \
+      ripgrep \
+      fzf \
+      bat \
+      fd-find \
+      gcc \
+      gcc-c++ \
+      cmake \
+      pkgconf-pkg-config \
+      poetry \
+      uv \
+      python3 \
+      python3-pip; \
+    dnf clean all; \
+    rm -rf /var/cache/dnf
+
+RUN set -euxo pipefail; \
+    npm install -g --ignore-scripts @earendil-works/pi-coding-agent; \
+    command -v node; \
+    command -v npm; \
+    command -v pi; \
+    node --version; \
+    npm --version; \
+    pi --version
+
+RUN set -euxo pipefail; \
+    dnf -y install dnf-plugins-core; \
+    dnf -y copr enable lihaohong/yazi; \
+    dnf -y install yazi; \
+    dnf clean all; \
+    rm -rf /var/cache/dnf
+
+RUN set -euxo pipefail; \
+    curl -fsSL "https://github.com/neovim/neovim/releases/download/v0.12.4/nvim-linux-x86_64.tar.gz" -o /tmp/nvim-linux-x86_64.tar.gz; \
+    tar -C /opt -xzf /tmp/nvim-linux-x86_64.tar.gz; \
+    ln -sf /opt/nvim-linux-x86_64/bin/nvim /usr/local/bin/nvim; \
+    rm -f /tmp/nvim-linux-x86_64.tar.gz; \
+    nvim --version | grep '^NVIM v0.12.4$'
+
+RUN set -euxo pipefail; \
+    (dnf -y install --setopt=install_weak_deps=false glibc-langpack-en || true); \
+    localedef -i en_US -f UTF-8 en_US.UTF-8 || true
+
+COPY dotfiles/ /opt/dev-base-env/dotfiles/
+COPY bin/ /opt/dev-base-env/bin/
+COPY scripts/install/link-dotfiles.sh /opt/dev-base-env/scripts/install/link-dotfiles.sh
+
+RUN set -euxo pipefail; \
+    chmod +x /opt/dev-base-env/scripts/install/link-dotfiles.sh; \
+    groupadd --gid "$USER_GID" "$USERNAME"; \
+    useradd --uid "$USER_UID" --gid "$USER_GID" -m "$USERNAME" -s /bin/bash; \
+    usermod -aG wheel "$USERNAME"; \
+    echo "%wheel ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/99-wheel-nopasswd; \
+    chmod 0440 /etc/sudoers.d/99-wheel-nopasswd; \
+    mkdir -p /workspaces; \
+    install -m 0755 /opt/dev-base-env/bin/sandbox /usr/local/bin/sandbox; \
+    rm -f "/home/${USERNAME}/.bashrc"; \
+    bash /opt/dev-base-env/scripts/install/link-dotfiles.sh --repo-root /opt/dev-base-env --home "/home/${USERNAME}"; \
+    test "$(realpath "/home/${USERNAME}/.config/nvim")" = "/opt/dev-base-env/dotfiles/.config/nvim"; \
+    test "$(realpath "/home/${USERNAME}/.bashrc")" = "/opt/dev-base-env/dotfiles/.bashrc"; \
+    chown -R "${USERNAME}:${USER_GID}" "/home/${USERNAME}" /workspaces
+
+USER ${USERNAME}
+WORKDIR /workspaces
+
+RUN set -euxo pipefail; \
+    export HOME="/home/${USERNAME}"; \
+    cd "$HOME"; \
+    pi install npm:pi-web-access; \
+    pi install npm:@quintinshaw/pi-dynamic-workflows; \
+    pi install npm:@narumitw/pi-plan-mode; \
+    pi list; \
+    nvim --headless "+q"

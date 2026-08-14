@@ -1,2 +1,0 @@
--- Filetype plugin for Markdown.
--- Intentionally empty in this cleanup.

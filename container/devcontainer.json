@@ -1,0 +1,25 @@
+{
+  "name": "Fedora Dev Container Base (Neovim + rg + fd)",
+
+  // Or build locally from this repo.
+  "build": {
+    "dockerfile": "Containerfile",
+    "context": "..",
+    "args": {
+      "USERNAME": "${localEnv:USERNAME}${localEnv:USER}",
+      "USER_UID": "1000",
+      "USER_GID": "1000"
+    }
+  },
+
+  // Forward common dev server ports to the Windows host.
+  "forwardPorts": [
+    "3000-3999",
+    "5000-5999",
+    "8000-8999"
+  ],
+  "settings": {
+    "terminal.integrated.defaultProfile.linux": "bash",
+    "terminal.integrated.fontFamily": "Cascadia Code NF"
+  }
+}

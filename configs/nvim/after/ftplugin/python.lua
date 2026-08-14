@@ -1,2 +1,0 @@
--- Filetype plugin for Python.
--- Intentionally empty in this cleanup.
