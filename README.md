@@ -98,3 +98,12 @@ Default layout:
   - Pi agent packages
   - symlinked dotfiles (`~/.config/nvim` and `~/.bashrc`)
   - `whoami` equals the host username passed as `EXPECTED_USER`.
+
+## Test demo
+
+This section is a lightweight **README edit** used for automation/demo purposes.
+
+Example command (host):
+```bash
+make container-smoke
+```
